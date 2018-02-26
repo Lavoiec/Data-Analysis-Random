@@ -1,0 +1,270 @@
+---
+title: "Advanced R Book Notes"
+author: "Chris Lavoie"
+date: "February 26, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Advanced R
+
+This is a notebook that will be posted publicly that works through my own personal notes and examples from the Advanced R Textbook by Hadley Wickham, which can be found at http://adv-r.had.co.nz/
+
+```{r test}
+print("testing")
+```
+
+## Data Structures
+
+### Vector
+
+Three Main Properties
+- Type
+- Length
+- Attributes
+Two types
+  - Atomic Vectors
+      - Come in 6 types: logical, integer, double, character, complex and raw (latter two are rare)
+      - Always flat (if nested, will be output as flat)
+      - Missing Values are NA
+
+
+```{r vectors, echo=TRUE}
+
+print("Flat")
+print(c(1,2,c(3,4)))
+
+
+```
+
+#### Vector Types and Tests
+ - Use typeof() to determine type, or if specific type is is.*() function
+ - All elements of a vector must be same type
+  - If different types in the vector, the types will be coeced into most flexible type
+    - Most flexible types
+      1. Character
+      2. Double
+      3. Integer
+      4. Logical
+      
+```{r vector coercion}
+
+test_vec <- c(1, "a")
+
+print_and_eval <- function(x) {
+  print(x)
+  print(typeof(x))
+}
+# Very clearly we assigned the 1 as an integer, however it was forced into a character vector by coercion
+sapply(test_vec, print_and_eval)
+
+```
+
+```{r vector logical}
+test_vec <- c(TRUE, FALSE, 1)
+test_vec_2 <- c(TRUE, FALSE, 1, "a")
+
+print(test_vec)
+print(test_vec_2)
+
+
+```
+
+Note above that (logical + numeric) = numeric. True is 1 and False is 0
+(logical + numeric + character) = character. True is the character "True" and vice versa with false.
+
+- Vector coercion can be taken advantage of in using booleans
+```{r operations on booleans}
+new_vec <- c(TRUE, FALSE, 1)
+# Will sum to 2, as it will be evaluated to c(1,0,1)
+sum(new_vec)
+```
+- Use as.*() whenever necessary to ensure type coercion
+
+
+### List
+
+- Elements can be of any type, including more lists
+```{r}
+new_list <- list("a", 1, TRUE, 3.5)
+print("Structure of List")
+# Each type will be preserved
+str(new_list)
+print("Structure of Vec")
+# Will evaluate to all character, as it is the most flexible type
+new_vec <- c("a", 1, TRUE, 3.5)
+str(new_vec)
+```
+
+- Lists can recursively hold more lists.
+  - Vectors can hold lists, but if given a vector of lists and other vectors, will coerce to list and flatten
+  
+```{r}
+vec_of_lists_and_vecs <- c(list(1,2), c(3,4))
+str(vec_of_lists_and_vecs)
+typeof(vec_of_lists_and_vecs)
+```
+
+- Note that the vector will coerce the items in the vector to the most flexible type before evaluating as a list
+```{r}
+tricky_vec <- c(c(TRUE, 0), c(FALSE, "a"), list("b", 3, TRUE))
+
+str(tricky_vec)
+paste("Length:", length(tricky_vec))
+print(tricky_vec)
+```
+- First vector in tricky_vec transforms TRUE to 1, and keeps zero (as integer is the most flexible type)
+- Second vector in tricky_vec transforms FALSE to a character and keeps "a"
+- The list (element 3) keeps all types
+- The entire list evaluated in tricky_vec is flat.
+
+- If we change the tricky_vec into a tricky_list...
+```{r}
+tricky_list <- list(c(TRUE, 0), c(FALSE, "a"), list("b", 3, TRUE))
+str(tricky_list)
+# Structure is kept, and not flattened
+paste("Length:", length(tricky_list))
+```
+
+- can test for list by is.list() command.
+- IMPORTANT: Dataframes are lists of lists!
+
+
+### EXERCISES
+
+1. What are the six types of atomic vector? How does a list differ from an atomic vector?
+  - In order of flexibility (least to most): Logical, Integer, Double, Character. Also Complex and Raw
+  - Vectors automatically flatten contents and coerce to most flexible type. Lists keep structure and retain type of data.
+  
+2. What makes is.vector() and is.numeric() fundamentally different to is.list() and is.character()?
+  - is.vector() checks if object is a vector with no attributes apart from names. Need to use is.atomic() or is.list()
+  - is.numeric() checks for numberliness. Evaluates true for integer and double. Need to specity is.integer() or is.double()
+  - is.list() checks if is a list, and only returns TRUE for objects typeof list. Vice versa for character
+  
+3. Test your knowledge of vector coercion rules by predicting the output of the following uses of c():
+```{r}
+# c(1, 0)
+c(1, FALSE)
+#c("a", "1")
+c("a", 1)
+#list(1, "a")
+c(list(1), "a")
+#c(1, 1)
+c(TRUE, 1L)
+```
+4. Why do you need to use unlist() to convert a list to an atomic vector? Why doesn’t as.vector() work?
+  - list() is a type of vector. You are converting from one type of vector (list) to another (atomic)
+  
+  
+5. Why is 1 == "1" true? Why is -1 < FALSE true? Why is "one" < 2 false?
+  - In the evaluation, both elements are converted to the most flexible form of the two.
+  
+```{r}
+1 == "1" # Both are converted to string
+
+-1 < FALSE # Both are converted to double. 0 is greater than -1
+
+"one" < 2 # Both are converted to character. the letters seem to come before numbers.
+```
+
+
+6. Why is the default missing value, NA, a logical vector? What’s special about logical vectors? (Hint: think about c(FALSE, NA_character_).)
+  - Logical vectors are Reserved Words that can be coerced into any type. TRUE and FALSE and NA are reserved words. This allows it to work with any type of vector
+  
+
+## Attributes
+
+- All objects have them
+- Stores metadata into the object
+- Can be thought of as a named list
+
+```{r}
+y <- 1:10
+str(y)
+attr(y, "hey_an_attribute") <- "This is something"
+
+attr(y, "hey_an_attribute")
+
+attributes(y)
+# Returns the type of the attribute value
+typeof(attr(y, "hey_an_attribute"))
+# Returns a named list
+typeof(attributes(y))
+```
+
+- By default, all attributes are lost in manipulation except the three most important (which are not accessed by attr(object, [attribute]))
+  - Names: names(x)
+    - Can name upon creation: c(a=1, b=2, c=3) or modify: x <- c(1,2,3); names(x) <- c("1", "2", "3"). And a third annoying way
+    - Don't have to be unique, but they should.
+    - Not all items in a vector need a name. If names attribute is non-empty, missing names will return NA_character_. If empty, returns NULL
+  - Dimensions: dim(x)
+  - Class: class(x)
+  
+- An important use of attributes is in the Factor variable.
+
+### Factors
+- Factor is a vector that can only contain predefined values
+- Built on top of the class factor(), which allows the vector to behave differently
+- Uses the levels() attribute, which is also not assignable.
+  - levels defines the set of allowable values in the vector
+  
+- Factors are useful when you know beforehand the set of allowable values
+   - the properties of a factor are useful in analysis.
+   
+```{r}
+factor_var <- as.factor(c("a", "b", "c", "a", "a", "b"))
+levels(factor_var) <- c("a", "b", "c", "d")
+# Here, it is plainly obvious that one of the possible classes is missing.
+# This can be helpful for those who are reading your analysis without too much background
+table(factor_var)
+```
+
+
+- Factors can be automatically created when reading in CSVs. For this reason, you want to be careful!
+  - This is especially true for character vectors
+- Use class([VAR]) to figure out if it is a vector or not. You'll be glad you did!
+
+- Note: A lot of the wrongdoings of factors in reading in data is undone with the readr package
+
+### Exercises
+
+1. An early draft used this code to illustrate structure():
+```{r}
+structure(1:5, comment = "my attribute")
+```
+But when you print that object you don’t see the comment attribute. Why? Is the attribute missing, or is there something else special about it? (Hint: try using help.)
+
+- A comment is a special attribute that is not printed. But if we assigned the comment attribute to an object, we could query it
+```{r}
+f <- structure(1:5, comment = "my attribute")
+# Not printed
+f
+# queried using a special function
+comment(f)
+```
+
+2. What happens to a factor when you modify its levels?
+```{r}
+f1 <- factor(letters) # levels is a default attribute
+f1
+levels(f1) <- rev(levels(f1)) # rev -> reverse
+
+f1
+
+```
+- The letters reversed. The levels assign an order, and the printing of the factor respects that order.
+
+3. What does this code do? How do f2 and f3 differ from f1? 
+```{r}
+f2 <- rev(factor(letters))
+f2
+f3 <- factor(letters, levels = rev(letters))
+f3
+```
+
+- The levels stay the same (as they were never changed), but the order of the initial vector changed.
+- f3 is like f2 but inverted. In either case, the position of the factors in f2 and f3 were specified, therefore they did not follow the order of the levels like in f1.
+
