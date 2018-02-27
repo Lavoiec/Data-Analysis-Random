@@ -116,3 +116,178 @@ str(m[m > 50])
 ```
 
 - Using [] will simplify to the lowest possible dimension
+- Matrices can also be subsetted like vectors.
+
+```{r}
+m[4]
+
+m[c(4,12)]
+```
+
+- Higher dimensional arrays can be subset via integer matrices.
+
+
+### Data frames
+
+- Recall: Possess characteristics of both lists and matrices.
+  - If subset with one vector, they behave like a list
+  - If subset with two vectors, they behave like a matrix
+  
+```{r}
+df <- data.frame(m)
+
+df["X1"]
+df[1:5,"X2"]
+# Behaves like a matrix
+df[c(1,3),]
+# Behaves like a list
+df[c(1,3)]
+```
+
+- Recall that matrix subsetting simplifies by default
+- List subsetting does not!
+```{r}
+# List subsetting
+print("List Subsetting")
+str(df["X1"])
+
+# Matrix subsetting
+print("Matrix Subsetting")
+str(df[,"X1"])
+```
+
+### Exercises
+
+1. Fix each of the following common data frame subsetting errors:
+
+mtcars[mtcars$cyl = 4, ]
+mtcars[-1:4, ]
+mtcars[mtcars$cyl <= 5]
+mtcars[mtcars$cyl == 4 | 6, ]
+```{r}
+mtcars[mtcars$cyl ==4, ] # Fixed equal sign
+mtcars[-c(1:4), ] # Made both operations as negative (cannot mix)
+mtcars[mtcars$cyl <= 5,] # Added comma
+mtcars[mtcars$cyl == 4 || 6, ] # Fixed "or" operator
+```
+
+2. Why does x <- 1:5; x[NA] yield five missing values? (Hint: why is it different from x[NA_real_]?)
+  - NA is a logical of length one and, similar to a logical vector that is shorter than the vector it is being subset on, it will be recycled to go along the whole vector, unlike if we used NA_real_ (which is a double)
+  
+```{r}
+typeof(NA_real_)
+typeof(NA)
+```
+
+3. What does upper.tri() return? How does subsetting a matrix with it work? Do we need any additional subsetting rules to describe its behaviour?
+- upper.tri() returns a logical matrix of equal dimensions. Any element on the upper triangular of the matrix returns TRUE, and anything else returns FALSE
+- Subsetting works like it would for any logical vector in a matrix.
+```{r}
+x <- outer(1:5, 1:5, FUN = "*")
+
+upper.tri(x)
+x[upper.tri(x)]
+```
+4. Why does mtcars[1:20] return an error? How does it differ from the similar mtcars[1:20, ]?
+  - mtcars[1:20] subsets like a list. It tries to return columns 1 - 20, but there are not that many columns in the dataframe
+  - mtcars[1:20,] subsets like a matrix. This returns the first twenty rows, and all columns
+  
+```{r}
+mtcars[1:5,]
+```
+
+
+5. Implement your own function that extracts the diagonal entries from a matrix (it should behave like diag(x) where x is a matrix).
+```{r}
+# returns all entries on the diagonal
+
+# Using the classic loop method
+diag_matrix <- function(a_matrix) {
+  matrix_rows <- 1:nrow(a_matrix)
+  matrix_cols <- 1:ncol(a_matrix)
+  
+  logical_matrix = matrix(FALSE,nrow = nrow(x), ncol=ncol(x))
+  
+  for (i in seq_along(matrix_rows)) {
+    for (j in seq_along(matrix_cols)) {
+      if (i == j) {
+        # If the row number is the column number, return true
+        logical_matrix[i,j] <-  TRUE
+      }
+    }
+  }
+  # use the logical matrix that only returns true
+  # on the diagonal to subset the original matrix
+  new_matrix <- a_matrix[logical_matrix]
+  return(new_matrix)
+  
+
+}
+f <- diag_matrix(x)
+# Look mom I did it
+f == diag(x)
+```
+
+6. What does df[is.na(df)] <- 0 do? How does it work?
+  - Subsets the dataframe by only selecting those who return TRUE to the logical is.na() result.
+  - Assigns only the result of the subset to 0!
+  
+## Subsetting Operators
+- Recall: Using [[]] (or $) returns a single value.
+- Important when working with lists. Using [] on lists always returns a list
+- Because [[]] only returns a single value, can only use with positive integer or single string
+- Since dataframes are lists of columns, use [[]] or $ to extract a single column
+
+
+### Simplifying Vs. Preserving
+- Preserving: Get the same type of output as the input
+- $ is a shorthand for [[, exact=FALSE]]
+  - This means you can use as incomplete strings
+  
+```{r}
+# Extracts mpg
+mtcars$m
+# Returns null since two columns are matched, which is not alowed with [[]]
+mtcars$d
+```
+- df$x is equivalent to df[["x", exact=FALSE]] - note that the quotations are added.
+  - It's best not to mess with this when programming.
+
+
+### Exercise
+1. Given a linear model, e.g., mod <- lm(mpg ~ wt, data = mtcars), extract the residual degrees of freedom. Extract the R squared from the model summary (summary(mod))
+```{r}
+mod <- lm(mpg ~ wt, data = mtcars)
+summ <- summary(mod)
+
+rsquared <- summ$r.squared
+rdf <- mod$df.residual
+
+rsquared
+rdf
+```
+
+
+## Subset and Assignment
+- All subsetting operators can be combined with assignment to modify values
+```{r}
+x <- 1:5
+x[c(1, 2)] <- 2:3
+x
+```
+
+- There is no checking for duplicates in assignment. Last one wins.
+- Cannot combine integers with NA
+- But can combine integer with NA. NA is Treated as FALSE
+
+- Empty subsetting can be useful to preserve the structure and class of the object
+
+```{r}
+# Keeps the dataframe class
+mtcars[] <- lapply(mtcars, as.integer)
+class(mtcars)
+# Becomes a list
+mtcars <- lapply(mtcars, as.integer)
+class(mtcars)
+```
+
