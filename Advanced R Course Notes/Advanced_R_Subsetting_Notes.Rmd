@@ -1,0 +1,118 @@
+---
+title: "Advanced_R-Subsetting"
+author: "Chris Lavoie"
+date: "February 26, 2018"
+output: html_document
+---
+
+## Subsetting
+
+### Overview
+
+- Three subsetting operators
+- Six types of subsetting
+- There are multiple differences in behaviour for each object type
+- Use subsetting with assignment
+
+### Data types
+
+#### Atomic Vectors
+
+```{r}
+x <- c(1.1,2.2,3.3,4.4)
+
+# Positive Integers gives location
+# Grabs vector position 1 and 3
+x[c(1,3)]
+
+# Grabs item 2
+x[2]
+
+# Integer indexs are truncated -> Doesn't evaluate the decimal, only the integer
+# Will both return position one
+x[c(1.9, 1.1)]
+
+# Negative integers omit that selection
+# Returns all but the second position
+x[-2]
+
+x[-c(1,4)]
+
+# Cannot mix positive and negative
+
+```
+
+#### Atomic Vectors and Logic
+
+- The most important part of subsetting
+- Expressions evaluate to logical operations
+- Logical evaluations are applied to each element
+```{r}
+
+#
+x > 2
+# Will return all elements where the expression evaluates to true
+x[x > 2]
+```
+- If logical is shorter than the length of the vector, the logical vector will be recyled until it is equal length
+
+- Subsetting NA always yields NA
+
+```{r}
+x[c(TRUE, FALSE, TRUE, NA)]
+```
+- Character vectors can return elements if the vector is named and the names match
+  - Names must match exactly!
+```{r}
+x <- c(a=1,b=2)
+
+x[1]
+x["a"]
+#TRUE
+x["a"] == x[1]
+```
+- Name and integer indices can be repeated
+
+
+
+### Lists
+- Work like vectors
+- using [] will return a list.
+- using [[]] will return a component of a list
+- $ is equivalent to [[]]
+
+```{r}
+l <- list(a=1, b=c(1,2), c="fork")
+
+# Returns list of 1
+str(l[2])
+# Returns element
+str(l[[3]])
+
+l["c"]
+```
+
+
+### Matrices and Arrays
+- Subset via
+  - Using multiple vectors
+  - Using a single vector
+  - Using a matrix
+  
+- Most common way is by supplying a 1d index for each dimension
+
+```{r}
+m <- matrix(1:100, nrow=10, ncol=10)
+
+m[1,1]
+# 2nd row, 6th column
+m[2,6]
+# Third row, whole column
+m[3,]
+# Rows 1 2 and 3, columns 2 3 4 and 5
+m[1:3, 2:5]
+
+str(m[m > 50])
+```
+
+- Using [] will simplify to the lowest possible dimension
