@@ -1,0 +1,108 @@
+---
+title: "Advanced_R_Functions"
+author: "Chris Lavoie"
+date: "February 27, 2018"
+output: html_document
+---
+
+# Functions
+
+- Objects in their own right
+  - Can work with them in the exact same way as any other object
+
+
+## Function Components
+- Each function has three parts
+  - body() - Code inside the function
+  - formals() - List of arguments
+  - environment() - the 'map' of the location of the function's variables
+  
+```{r}
+f <- function(x) x^2
+
+body(f)
+formals(f)
+environment(f)
+```
+
+- Assignment of body can also modify functions
+
+- Functions also contain attributes (since they are an object)
+  - ex. srcref points to the source code of the function
+  
+```{r}
+attributes(f)
+```
+
+
+
+## Primitive Functions
+- Primitive functions have no components. They are functions written in C
+- Only found in the {base} package
+
+### Exercises
+1.What function allows you to tell if an object is a function? What function allows you to tell if a function is a primitive function?
+```{r}
+class(f)
+class(sum)
+```
+
+
+2. This code makes a list of all functions in the base package.
+Use it to answer the following questions:
+
+a.Which base function has the most arguments?
+
+b.How many base functions have no arguments? What's special about those functions?
+
+c. How could you adapt the code to find all primitive functions?
+```{r}
+objs <- mget(ls("package:base"), inherits = TRUE)
+funs <- Filter(is.function, objs)
+
+
+length_of_formals <- function(x) return(length(formals(x)))
+
+fun_lens <- lapply(funs, length_of_formals)
+
+which.max(unlist(fun_lens))
+```
+```{r}
+
+fun_no_formals <- fun_lens[fun_lens == 0]
+
+length(fun_no_formals)
+
+prims <- Filter(is.null, formals(objs))
+
+```
+
+
+## Lexical Scoping
+- Set of rules that govern how R looks up the value of a symbol
+
+Lexical Scoping: Implemented automatically at the language level
+  - Looks up symbol values based on how functions were nested when created
+    - not when they were called
+  
+  - Four basic principles
+    - Name Masking
+      - If a name isn't defined inside a function, the function will look up
+        - This goes all the way until it reaches a global variable
+        - Same is true for closures (functions inside functions)
+    - Functions v. Variables
+      - Finding functions works the exact same way as finding variables
+        - However, if you are clearly looking for a function (like n()), R will ignore non-functions in its search
+        - It doesn't mean it's wise to do so.
+    - A fresh Start
+      - Every time a function is called, a new environment is created to host the execution
+      - Each invocation is a completely different state
+    - Dynamic Lookup
+      - R looks for values when the function is run, not created
+      - This is problematic when functions are not self-contained
+        -.... Always make your functions self contained!
+        
+  
+Dynamic Scoping: Used in select functions to save typing during analysis
+
+
